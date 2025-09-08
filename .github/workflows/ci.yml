@@ -43,9 +43,16 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       # Push Docker image to Docker Hub
-      - name: Push Docker image
+      - name: Tag and push Docker image
         run: |
-          IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/myapp
-          echo "Pushing image to Docker Hub: $IMAGE_NAME"
-          docker tag myapp:latest $IMAGE_NAME:latest
-          docker push $IMAGE_NAME:latest
+          set -euxo pipefail
+          USER_LC=$(echo "${{ secrets.DOCKER_USERNAME }}" | tr '[:upper:]' '[:lower:]')
+          REPO="${USER_LC}/${IMAGE_NAME}"   # uses IMAGE_NAME from job env
+          echo "Pushing image to Docker Hub: ${REPO}"
+
+          docker tag myapp:latest ${REPO}:latest
+          docker tag myapp:latest ${REPO}:${GITHUB_SHA::7}
+
+          docker push ${REPO}:latest
+          docker push ${REPO}:${GITHUB_SHA::7}
+
