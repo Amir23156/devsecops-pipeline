@@ -1,0 +1,95 @@
+name: CI/CD to EKS
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  IMAGE_NAME: devsecops-pipeline
+  AWS_REGION: us-east-1
+  EKS_CLUSTER: devsecops-cluster
+  NAMESPACE: devsecops
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      short: ${{ steps.meta.outputs.short }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build image
+        run: docker build -t myapp:latest -f app/Dockerfile .
+
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: myapp:latest
+          format: table
+          exit-code: '0'
+          ignore-unfixed: true
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Tag & push to Docker Hub
+        run: |
+          set -euxo pipefail
+          USER_LC=$(echo "${{ secrets.DOCKER_USERNAME }}" | tr '[:upper:]' '[:lower:]')
+          REPO="${USER_LC}/${IMAGE_NAME}"
+          SHA="${GITHUB_SHA::7}"
+          docker tag myapp:latest ${REPO}:latest
+          docker tag myapp:latest ${REPO}:${SHA}
+          docker push ${REPO}:latest
+          docker push ${REPO}:${SHA}
+      - name: Export short SHA
+        id: meta
+        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy to Amazon EKS
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write     
+      contents: read
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GithubActionsEKSDeployRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name $EKS_CLUSTER --region $AWS_REGION
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Apply manifests (idempotent)
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/service.yaml
+          if [ -f k8s/configmap.yaml ]; then kubectl apply -f k8s/configmap.yaml; fi
+          kubectl apply -f k8s/deployment.yaml
+
+      - name: Rollout current image by commit SHA
+        run: |
+          USER_LC=$(echo "${{ secrets.DOCKER_USERNAME }}" | tr '[:upper:]' '[:lower:]')
+          REPO="${USER_LC}/${{ env.IMAGE_NAME }}"
+          SHA="${{ needs.build.outputs.short }}"
+          kubectl -n ${{ env.NAMESPACE }} set image deployment/flask-app web=${REPO}:${SHA}
+          kubectl -n ${{ env.NAMESPACE }} rollout status deployment/flask-app --timeout=180s
+
+      - name: Show Service external address
+        run: kubectl -n ${{ env.NAMESPACE }} get svc flask-app -o wide
