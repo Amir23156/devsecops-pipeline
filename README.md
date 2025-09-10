@@ -29,48 +29,6 @@ It includes:
 
 ---
 
-### Architecture Diagram
-```mermaid
-flowchart LR
-  Dev[Developer] -->|Push Code| GitHub
-
-  subgraph CI[GitHub Actions CI/CD]
-    GitHub --> Build[Build & Trivy Scan]
-    Build --> PushImage[Push to Docker Hub]
-    PushImage -.-> DockerHub[(Docker Hub)]
-    Build --> Deploy[Deploy to AWS EKS via OIDC]
-  end
-
-  subgraph AWS[Amazon Web Services]
-    IAM[IAM Role - OIDC]
-    Deploy --> IAM
-    IAM --> EKS[EKS Cluster: devsecops-cluster]
-    EKS --> Pods[Flask Pods (2 Replicas)]
-    Pods --> SVC[LoadBalancer Service]
-    SVC --> ELB[Elastic Load Balancer]
-    ELB --> User[External Users]
-  end
-```
-### Project Structure
-devsecops-pipeline/
-│
-├── app/                  # Flask application
-│   ├── main.py           # Flask API code
-│   └── Dockerfile        # Dockerfile for building the app
-│
-├── k8s/                  # Kubernetes manifests
-│   ├── namespace.yaml    # Namespace definition
-│   ├── deployment.yaml   # Flask app deployment
-│   └── service.yaml      # LoadBalancer service
-│
-├── .github/
-│   └── workflows/
-│       ├── ci.yml        # Build & Scan pipeline
-│       └── ci-cd-eks.yml # Full CI/CD with EKS deploy
-│
-├── requirements.txt      # Python dependencies
-└── README.md
-
 ## Setup Instructions
 
 ### Prerequisites
@@ -97,14 +55,16 @@ docker run -p 5000:5000 flask-app:latest
 curl http://127.0.0.1:5000/health
 curl http://127.0.0.1:5000/metrics
 curl http://127.0.0.1:5000/orders
+<img width="1072" height="208" alt="image" src="https://github.com/user-attachments/assets/a6fc94f3-17ee-4868-b1f5-015fb08d79ab" />
 
-
-### 4. Deploy to Kubernetes (Local Minikube)
+### 4. Deploy to Kubernetes for practice (Local Minikube)
 kubectl apply -f k8s/
 kubectl get pods -n devsecops
 Then Port Forward to test :
 kubectl -n devsecops port-forward svc/flask-app 8080:80
 curl http://127.0.0.1:8080/health
+<img width="951" height="460" alt="image" src="https://github.com/user-attachments/assets/b683259b-bbc1-4fbc-9edb-c441f027d217" />
+
 
 ## Deploy to Amazon EKS
 
