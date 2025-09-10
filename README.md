@@ -49,13 +49,15 @@ Before starting, ensure you have the following installed and configured:
   - `AmazonEC2ContainerRegistryFullAccess`
 
 ### 1. Clone the Repository
+```bash
 git clone https://github.com/Amir23156/devsecops-pipeline.git
 cd devsecops-pipeline
-
+```
 ### 2. Build and Run Locally
+```bash
 docker build -t flask-app:latest -f app/Dockerfile .
 docker run -p 5000:5000 flask-app:latest
-
+```
 ### 3. Test Endpoint
 ```bash
 curl http://127.0.0.1:5000/health
