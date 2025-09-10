@@ -52,29 +52,35 @@ docker build -t flask-app:latest -f app/Dockerfile .
 docker run -p 5000:5000 flask-app:latest
 
 ### 3. Test Endpoint
+```bash
 curl http://127.0.0.1:5000/health
 curl http://127.0.0.1:5000/metrics
 curl http://127.0.0.1:5000/orders
+```
 <img width="1072" height="208" alt="image" src="https://github.com/user-attachments/assets/a6fc94f3-17ee-4868-b1f5-015fb08d79ab" />
 
 ### 4. Deploy to Kubernetes for practice (Local Minikube)
+```bash
 kubectl apply -f k8s/
 kubectl get pods -n devsecops
 Then Port Forward to test :
 kubectl -n devsecops port-forward svc/flask-app 8080:80
 curl http://127.0.0.1:8080/health
+```
 <img width="951" height="460" alt="image" src="https://github.com/user-attachments/assets/b683259b-bbc1-4fbc-9edb-c441f027d217" />
 
 
 ## Deploy to Amazon EKS
 
 We first want to create an EKS cluster from CloudShell :
+```bash
 eksctl create cluster \
   --name devsecops-cluster \
   --region us-east-1 \
   --nodes 2 \
   --node-type t3.medium \
   --version 1.29
+```
 Then we can verify the cluster simply by running : kubectl get nodes
 
 ## Security Integration
