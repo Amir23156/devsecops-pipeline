@@ -10,7 +10,7 @@ It includes:
 - Load balancing with an AWS Elastic Load Balancer
 - GitHub OIDC integration for secure, secretless AWS authentication
 
----
+
 
 ## Architecture
 
@@ -27,7 +27,7 @@ It includes:
    - Performs a rolling update with zero downtime.
 5. AWS Elastic Load Balancer exposes the service to external users.
 
----
+
 
 ## Setup Instructions
 
@@ -93,7 +93,7 @@ Triggered on every push or pull request:
 2. **Run** Trivy vulnerability scan.
 3. **Push** Docker image to Docker Hub.
 
----
+
 
 ### CD Pipeline (`.github/workflows/ci-cd-eks.yml`)
 
