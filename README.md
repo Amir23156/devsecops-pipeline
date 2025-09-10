@@ -1,5 +1,10 @@
 # DevSecOps Pipeline with AWS EKS
 
+![Build Status](https://github.com/Amir23156/devsecops-pipeline/actions/workflows/ci.yml/badge.svg)
+![EKS Deployment](https://github.com/Amir23156/devsecops-pipeline/actions/workflows/ci-cd-eks.yml/badge.svg)
+![Docker Pulls](https://img.shields.io/docker/pulls/amir23156/devsecops-pipeline)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-Deployed-blue?logo=kubernetes)
+
 ## Overview
 This project demonstrates a full **DevSecOps pipeline** for a containerized **Flask microservice** running on **Amazon EKS (Elastic Kubernetes Service)**.  
 It includes:
